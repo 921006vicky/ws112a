@@ -1,78 +1,50 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 
 const router = new Router();
-router
-  .get("/", (ctx) => {
-    ctx.response.body = "Hello World!"
-   })
 
-  .get("/room/e319", (ctx) => {
+const rooms = [
+  { path: "/room/e319", title: "數位系統應用實驗" },
+  { path: "/room/e320", title: "多媒體實驗室" },
+  { path: "/room/e321", title: "電腦網路實驗室" },
+  { path: "/room/e322", title: "嵌入式實驗室" },
+];
+
+rooms.forEach((room) => {
+  router.get(room.path, (ctx) => {
     ctx.response.body = `
         <html>
             <body>
-            <h1>OO教室</h1>
+            <h1>${room.title}</h1>
             </body>
         </html>
-        `
-   })
+        `;
+  });
+});
 
-  .get("/room/e320", (ctx) => {
+const links = [
+  { path: "/ngu", title: "金門大學", url: "https://www.nqu.edu.tw/" },
+  { path: "/ngu/csie", title: "金門大學資工學系", url: "https://csie.nqu.edu.tw/" },
+];
+
+links.forEach((link) => {
+  router.get(link.path, (ctx) => {
     ctx.response.body = `
         <html>
             <body>
-            <h1>嵌入式教室</h1>
+            <h1>${link.title}</h1>
+            <a href="${link.url}">${link.title}</a>
             </body>
-        </html>
-        `
-   })
+        </html>`;
+  });
+});
 
-  .get("/room/e321", (ctx) => {
-    ctx.response.body = `
-        <html>
-            <body>
-            <h1>多媒體教室</h1>
-            </body>
-        </html>
-        `
-   })
+router.get("/to/ngu", (ctx) => {
+  ctx.response.redirect('https://www.nqu.edu.tw/');
+});
 
-  .get("/room/e322", (ctx) => {
-    ctx.response.body = `
-        <html>
-            <body>
-            <h1>XX教室</h1>
-            </body>
-        </html>
-        `
-   })
-
-  .get("/ngu", (ctx) => {
-    ctx.response.body = `
-        <html>
-            <body>
-            <h1>金門大學</h1>
-            <a href="https://www.nqu.edu.tw/">NGU</a>
-            </body>
-        </html>`
-   })
-
-  .get("/ngu/csie", (ctx) => { 
-    ctx.response.body = `
-        <html>
-            <body>
-            <h1>金門大學資工學系</h1>
-            <a href="https://csie.nqu.edu.tw/">金門大學資工學系</a>
-            </body>
-        </html>`
-   })
-
-  .get("/to/ngu", (ctx) => {
-    ctx.response.redirect('https://www.nqu.edu.tw/');
-   })
-
-  .get("/to/ngu/csie", (ctx) => { 
-    ctx.response.redirect('https://csie.nqu.edu.tw/');
-   });
+router.get("/to/ngu/csie", (ctx) => {
+  ctx.response.redirect('https://csie.nqu.edu.tw/');
+});
 
 const app = new Application();
 app.use(router.routes());
