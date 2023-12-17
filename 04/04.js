@@ -59,11 +59,15 @@ router
       if (peoples.get(name)&&password==peoples.get(name).password) {
         ctx.response.type = 'text/html'
         ctx.response.body = `<p>登入成功</p>`
-      } else {
+      }
+      else {
         ctx.response.type = 'text/html'
         ctx.response.body = `<p>登入失敗</p><p><a href="http://127.0.0.1:8000/public/find.html">重新登入</a></p>`
       }
+
       console.log("key:",peoples.get(name).password)
+
+      
     }
   })
   .get("/public/(.*)", async (ctx) => {
