@@ -1,6 +1,9 @@
 import { Application, Router, send } from "https://deno.land/x/oak/mod.ts";
+import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
 const app = new Application()
+const db = new DB("07.db");
+db.query("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, body TEXT)")
 
 const posts = [
   {id:0, title:'Vicky', body:'090377762'}
