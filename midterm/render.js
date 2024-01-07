@@ -102,14 +102,15 @@ export function fail() {
 }
 
 export function list(posts, user) {
-  console.log('list: user=', user)
-  let list = []
+  console.log('list: user=', user);
+  let list = [];
   for (let post of posts) {
     list.push(`
     <li>
       <h2>${post.title} -- 作者 ${post.username}</h2>
       <p><a href="/post/${post.id}">閱讀文章</a></p>
       ${(user != null && user.username === post.username) ? `<p><a href="/post/delete/${post.id}">刪除文章</a></p>` : ''}
+      <p>瀏覽數: ${post.views}</p>
     </li>
     `);
   }
@@ -136,9 +137,11 @@ export function newPost() {
   `);
 }
 
-export function show(post) {
+export function show(post, homeLink) {
   return layout(post.title, `
     <h1>${post.title} -- 作者 ${post.username}</h1>
     <p>${post.body}</p>
+    <p>瀏覽數: ${post.views}</p>
+    <p><a href="${homeLink}">返回首頁</a></p>
   `);
 }

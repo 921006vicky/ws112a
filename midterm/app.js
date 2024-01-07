@@ -1,15 +1,16 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import * as render from './render.js'
+import * as render from './render.js';
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
 import { Session } from "https://deno.land/x/oak_sessions/mod.ts";
 
 const db = new DB("blog.db");
-db.query("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, title TEXT, body TEXT)");
+db.query("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, title TEXT, body TEXT, views INTEGER DEFAULT 0)");
 db.query("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, email TEXT)");
 
 const router = new Router();
 
-router.get('/', list)
+router
+  .get('/', list)
   .get('/signup', signupUi)
   .post('/signup', signup)
   .get('/login', loginUi)
@@ -18,50 +19,51 @@ router.get('/', list)
   .get('/post/new', add)
   .get('/post/:id', show)
   .post('/post', create)
-  .get('/post/delete/:id', deletePost);
+  .get('/post/delete/:id', deletePost)
+  .get('/post/view/:id', increaseViews);
 
-const app = new Application()
-app.use(Session.initMiddleware())
+const app = new Application();
+app.use(Session.initMiddleware());
 app.use(router.routes());
 app.use(router.allowedMethods());
 
 function sqlcmd(sql, arg1) {
-  console.log('sql:', sql)
+  console.log('sql:', sql);
   try {
-    var results = db.query(sql, arg1)
-    console.log('sqlcmd: results=', results)
-    return results
+    var results = db.query(sql, arg1);
+    console.log('sqlcmd: results=', results);
+    return results;
   } catch (error) {
-    console.log('sqlcmd error: ', error)
-    throw error
+    console.log('sqlcmd error: ', error);
+    throw error;
   }
 }
 
 function postQuery(sql) {
-  let list = []
-  for (const [id, username, title, body] of sqlcmd(sql)) {
-    list.push({id, username, title, body})
+  let list = [];
+  for (const [id, username, title, body, views] of sqlcmd(sql)) {
+    list.push({ id, username, title, body, views });
   }
-  console.log('postQuery: list=', list)
-  return list
+  console.log('postQuery: list=', list);
+  return list;
 }
 
 function userQuery(sql) {
-  let list = []
+  let list = [];
   for (const [id, username, password, email] of sqlcmd(sql)) {
-    list.push({id, username, password, email})
+    list.push({ id, username, password, email });
   }
-  console.log('userQuery: list=', list)
-  return list
+  console.log('userQuery: list=', list);
+  return list;
 }
 
 async function parseFormBody(body) {
-  const pairs = await body.value
-  const obj = {}
+  const pairs = await body.value;
+  const obj = {};
   for (const [key, value] of pairs) {
-    obj[key] = value
+    obj[key] = value;
   }
-  return obj
+  return obj;
 }
 
 async function signupUi(ctx) {
@@ -69,15 +71,16 @@ async function signupUi(ctx) {
 }
 
 async function signup(ctx) {
-  const body = ctx.request.body()
+  const body = ctx.request.body();
   if (body.type === "form") {
-    var user = await parseFormBody(body)
-    var dbUsers = userQuery(`SELECT id, username, password, email FROM users WHERE username='${user.username}'`)
+    var user = await parseFormBody(body);
+    var dbUsers = userQuery(`SELECT id, username, password, email FROM users WHERE username='${user.username}'`);
     if (dbUsers.length === 0) {
       sqlcmd("INSERT INTO users (username, password, email) VALUES (?, ?, ?)", [user.username, user.password, user.email]);
-      ctx.response.body = render.success()
-    } else 
-      ctx.response.body = render.fail()
+      ctx.response.body = render.success();
+    } else {
+      ctx.response.body = render.fail();
+    }
   }
 }
 
@@ -86,59 +89,63 @@ async function loginUi(ctx) {
 }
 
 async function login(ctx) {
-  const body = ctx.request.body()
+  const body = ctx.request.body();
   if (body.type === "form") {
-    var user = await parseFormBody(body)
-    var dbUsers = userQuery(`SELECT id, username, password, email FROM users WHERE username='${user.username}'`) // userMap[user.username]
-    var dbUser = dbUsers[0]
-    if (dbUser.password === user.password) {
-      ctx.state.session.set('user', user)
-      console.log('session.user=', await ctx.state.session.get('user'))
+    var user = await parseFormBody(body);
+    var dbUsers = userQuery(`SELECT id, username, password, email FROM users WHERE username='${user.username}'`);
+    var dbUser = dbUsers[0];
+    if (dbUser && dbUser.password === user.password) {
+      ctx.state.session.set('user', user);
+      console.log('session.user=', await ctx.state.session.get('user'));
       ctx.response.redirect('/');
     } else {
-      ctx.response.body = render.fail()
+      ctx.response.body = render.fail();
     }
   }
 }
 
 async function logout(ctx) {
-   ctx.state.session.set('user', null)
-   ctx.response.redirect('/')
+  ctx.state.session.set('user', null);
+  ctx.response.redirect('/');
 }
 
 async function list(ctx) {
-  let posts = postQuery("SELECT id, username, title, body FROM posts")
-  console.log('list:posts=', posts)
+  let posts = postQuery("SELECT id, username, title, body, views FROM posts");
+  console.log('list:posts=', posts);
   ctx.response.body = await render.list(posts, await ctx.state.session.get('user'));
 }
 
 async function add(ctx) {
-  var user = await ctx.state.session.get('user')
+  var user = await ctx.state.session.get('user');
   if (user != null) {
     ctx.response.body = await render.newPost();
   } else {
-    ctx.response.body = render.fail()
+    ctx.response.body = render.fail();
   }
 }
 
 async function show(ctx) {
   const pid = ctx.params.id;
-  let posts = postQuery(`SELECT id, username, title, body FROM posts WHERE id=${pid}`)
-  let post = posts[0]
-  console.log('show:post=', post)
+  let posts = postQuery(`SELECT id, username, title, body, views FROM posts WHERE id=${pid}`);
+  let post = posts[0];
+  console.log('show:post=', post);
   if (!post) ctx.throw(404, 'invalid post id');
-  ctx.response.body = await render.show(post);
+
+  // 增加瀏覽數
+  sqlcmd(`UPDATE posts SET views = views + 1 WHERE id=${pid}`);
+
+  ctx.response.body = await render.show(post, '/');
 }
 
 async function create(ctx) {
-  const body = ctx.request.body()
+  const body = ctx.request.body();
   if (body.type === "form") {
-    var post = await parseFormBody(body)
-    console.log('create:post=', post)
-    var user = await ctx.state.session.get('user')
+    var post = await parseFormBody(body);
+    console.log('create:post=', post);
+    var user = await ctx.state.session.get('user');
     if (user != null) {
-      console.log('user=', user)
-      sqlcmd("INSERT INTO posts (username, title, body) VALUES (?, ?, ?)", [user.username, post.title, post.body]);  
+      console.log('user=', user);
+      sqlcmd("INSERT INTO posts (username, title, body) VALUES (?, ?, ?)", [user.username, post.title, post.body]);
     } else {
       ctx.throw(404, 'not login yet!');
     }
@@ -153,5 +160,12 @@ async function deletePost(ctx) {
   ctx.response.redirect('/');
 }
 
-console.log('Server run at http://127.0.0.1:8000')
+async function increaseViews(ctx) {
+  const pid = ctx.params.id;
+  // 執行增加瀏覽數的 SQL 命令
+  sqlcmd(`UPDATE posts SET views = views + 1 WHERE id=${pid}`);
+  ctx.response.redirect('/');
+}
+
+console.log('Server run at http://127.0.0.1:8000');
 await app.listen({ port: 8000 });
