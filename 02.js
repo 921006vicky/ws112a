@@ -1,19 +1,19 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 
-const room = new Map();
-room.set("e319",{
+const books = new Map();
+books.set("e319",{
     id:"e319",
     title:"數位系統應用實驗室"
 })
-room.set("e320",{
+books.set("e320",{
     id:"e320",
     title:"多媒體實驗室"
 })
-room.set("e321",{
+books.set("e321",{
     id:"e321",
     title:"電腦網路實驗室"
 })
-room.set("e322",{
+books.set("e322",{
     id:"e322",
     title:"嵌入式實驗室"
 })
@@ -46,8 +46,8 @@ router
         context.response.redirect('https://csie.nqu.edu.tw/')
     })
     .get("/room/:id", (context) => {
-        if (context.params && context.params.id && room.has(context.params.id)) {
-            context.response.body = room.get(context.params.id);
+        if (context.params && context.params.id && books.has(context.params.id)) {
+            context.response.body = books.get(context.params.id);
         }
     });
 
