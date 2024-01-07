@@ -9,7 +9,7 @@ const posts = [
 
 const router = new Router()
 
-router.get('/', (ctx)=>ctx.response.redirect('/public/index.html'))
+router.get('/', (ctx)=>ctx.response.redirect('http://127.0.0.1:8001/public/index.html'))
   .get('/list', list)
   .get('/post/:id', show)
   .post('/post', create)

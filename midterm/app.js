@@ -18,6 +18,7 @@ router.get('/', list)
   .get('/post/new', add)
   .get('/post/:id', show)
   .post('/post', create)
+  .get('/post/delete/:id', deletePost);
 
 const app = new Application()
 app.use(Session.initMiddleware())
@@ -143,6 +144,13 @@ async function create(ctx) {
     }
     ctx.response.redirect('/');
   }
+}
+
+async function deletePost(ctx) {
+  const pid = ctx.params.id;
+  // 執行刪除文章的 SQL 命令
+  sqlcmd(`DELETE FROM posts WHERE id=${pid}`);
+  ctx.response.redirect('/');
 }
 
 console.log('Server run at http://127.0.0.1:8000')
