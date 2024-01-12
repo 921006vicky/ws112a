@@ -20,7 +20,8 @@ router
   .get('/post/:id', show)
   .post('/post', create)
   .get('/post/delete/:id', deletePost)
-  .get('/post/view/:id', increaseViews);
+  .get('/post/view/:id', increaseViews)
+  .get('/user/:username', userPosts);
 
 const app = new Application();
 app.use(Session.initMiddleware());
@@ -165,6 +166,12 @@ async function increaseViews(ctx) {
   // 執行增加瀏覽數的 SQL 命令
   sqlcmd(`UPDATE posts SET views = views + 1 WHERE id=${pid}`);
   ctx.response.redirect('/');
+}
+
+async function userPosts(ctx) {
+  const username = ctx.params.username;
+  let userPosts = postQuery(`SELECT id, username, title, body, views FROM posts WHERE username='${username}'`);
+  ctx.response.body = await render.list(userPosts, await ctx.state.session.get('user'));
 }
 
 console.log('Server run at http://127.0.0.1:8000');
